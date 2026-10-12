@@ -1,0 +1,5 @@
+### Backend health
+GET http://localhost:8080/actuator/health
+
+### Health through the Vite dev proxy
+GET http://localhost:5173/actuator/health
