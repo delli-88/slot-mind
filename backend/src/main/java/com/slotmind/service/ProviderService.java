@@ -2,6 +2,7 @@ package com.slotmind.service;
 
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import com.slotmind.domain.AppointmentStatus;
 import com.slotmind.domain.Provider;
 import com.slotmind.domain.ProviderRepository;
 import com.slotmind.domain.ProviderStatus;
+import com.slotmind.domain.TriggerReason;
 
 @Service
 public class ProviderService {
@@ -22,9 +24,13 @@ public class ProviderService {
 
 	private final AppointmentRepository appointments;
 
-	public ProviderService(ProviderRepository providers, AppointmentRepository appointments) {
+	private final ApplicationEventPublisher events;
+
+	public ProviderService(ProviderRepository providers, AppointmentRepository appointments,
+			ApplicationEventPublisher events) {
 		this.providers = providers;
 		this.appointments = appointments;
+		this.events = events;
 	}
 
 	@Transactional(readOnly = true)
@@ -51,6 +57,10 @@ public class ProviderService {
 			affected = stranded.stream().map(Appointment::getId).sorted().toList();
 		}
 		providers.saveAndFlush(provider);
+		if (!affected.isEmpty()) {
+			// acted on only after this transaction commits (RescheduleHandler)
+			events.publishEvent(new RescheduleRequested(TriggerReason.PROVIDER_OFFLINE, affected));
+		}
 		return new ProviderStatusResponse(ProviderResponse.from(provider), affected, !affected.isEmpty());
 	}
 

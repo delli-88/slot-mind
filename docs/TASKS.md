@@ -2,7 +2,7 @@
 Legend: TODO · DOING · DONE · BLOCKED · CUT
 
 ## Current state (rewrite fully on every update)
-Sprint: S3 complete incl. one real Claude call (claude-sonnet-5-5); suite green | Running: yes | Broken: nothing known; one unexplained PARSE_ERROR on the first real attempt (logging added, not reproduced) | Uncommitted: AiStrategy logging + docs | Last commit: d2adba5 feat(s3) | Next 3: 4.1, 4.2, 4.3 | Open questions: intermittent PARSE_ERROR rate (run a few calls with DEBUG on) | Time: ~minute 108 of 150, about 8 min behind the S4 start
+Sprint: S4 complete (4.1-4.6), full suite 146 tests green, app boots and the offline loop runs against the real app | Running: yes | Broken: nothing known; PARSE_ERROR on first real call still unexplained | Uncommitted: all S4 code, tests, docs | Last commit: 008d5b7 | Next 3: 5.1, 5.2, 5.3 (React UI) | Open questions: intermittent PARSE_ERROR (consider max-tokens 4096) | Time: 14:00 = minute 99 of 150, on plan (S4 window ended at 130)
 
 ## Sprints
 | ID | Sprint | Window (min) | Est. task minutes | Exit criteria | Status |
@@ -71,18 +71,18 @@ Rows: goal (req/rubric) | files | test | done when | evidence | commit. Files pe
       files: service/RescheduleService.java, application.properties, test/service/AiRescheduleTest.java, docs/BUILD_LOG.md | test: A19, A20, `strategy=ai/rule` switching; manual real call recorded | done when: green; real call result logged | evidence: AiRescheduleTest 6 green (A19, A20, ai/rule switching, cause persisted). Real call DONE (user-run, see BUILD_LOG 11): source LLM, confidence 0.6; one earlier run fell back with PARSE_ERROR, cause unknown | commit:
 
 ### S4 Agentic loop and concurrency  (window 100-130)
-- [ ] 4.1 Async executor, `RescheduleRequested` event, `RescheduleHandler` (AFTER_COMMIT, per-id try/catch)  (T-4, ADR-005)
-      files: config/AsyncConfig.java, service/RescheduleRequested.java, service/RescheduleHandler.java, test/service/RescheduleHandlerTest.java | test: each id planned; one failing id does not stop the rest; not run on rollback | done when: green | evidence: | commit:
-- [ ] 4.2 Publish `PROVIDER_OFFLINE` from `ProviderService`  (T-4, demo path)
-      files: service/ProviderService.java, test/service/OfflineLoopTest.java | test: IT PATCH PRV-001 OFFLINE returns immediately, then both appointments get PENDING suggestions (polling wait) | done when: green | evidence: | commit:
-- [ ] 4.3 Publish `SLOT_CANCELLED` from `SlotService`  (T-4)
-      files: service/SlotService.java, test/service/CancelLoopTest.java | test: IT cancel SLT-002 gives one SLOT_CANCELLED suggestion; cancel of an unheld slot publishes nothing | done when: green | evidence: | commit:
-- [ ] 4.4 Dedupe and failure paths through the loop  (T-4 duplicates, AI failure not silent)
-      files: test/service/LoopFailureTest.java, service/RescheduleService.java (fixes only) | test: repeated trigger creates no duplicate; fake LLM failure still yields a RULES suggestion with cause; ROUTINE pediatric appointment gets `attention_reason NO_CANDIDATE_SLOT` | done when: green | evidence: | commit:
-- [ ] 4.5 Thread-based concurrency tests  (AGT-3, I1, I2)
-      files: test/service/ConcurrentAcceptTest.java | test: N threads accept two suggestions for one slot gives exactly one 200 and the rest 409; same suggestion twice gives one success; N concurrent bookings of one slot gives one 201 | done when: green and repeatable (run 5x) | evidence: | commit:
-- [ ] 4.6 End-to-end walkthrough test  (brief walkthrough trace, demo)
-      files: test/e2e/WalkthroughTest.java | test: book, PRV-001 OFFLINE, suggestions appear, accept first (200), accept second (409) | done when: green | evidence: | commit:
+- [x] 4.1 Async executor, `RescheduleRequested` event, `RescheduleHandler` (AFTER_COMMIT, per-id try/catch)  (T-4, ADR-005)
+      files: config/AsyncConfig.java, service/RescheduleRequested.java, service/RescheduleHandler.java, test/service/RescheduleHandlerTest.java, RescheduleHandlerWiringTest.java | test: each id planned; one failing id does not stop the rest; not run on rollback | done when: green | evidence: RescheduleHandlerTest (2) + RescheduleHandlerWiringTest (rollback drops, commit fires) green | commit:
+- [x] 4.2 Publish `PROVIDER_OFFLINE` from `ProviderService`  (T-4, demo path)
+      files: service/ProviderService.java, test/service/OfflineLoopTest.java | test: IT PATCH PRV-001 OFFLINE returns immediately, then both appointments get PENDING suggestions (polling wait) | done when: green | evidence: OfflineLoopTest green (PATCH returns at once, both get LLM suggestions via fake LLM, second accept 409); SeedScenarioTest now awaits the loop | commit:
+- [x] 4.3 Publish `SLOT_CANCELLED` from `SlotService`  (T-4)
+      files: service/SlotService.java, test/service/LoopFailureTest.java | test: IT cancel SLT-002 gives one SLOT_CANCELLED suggestion; cancel of an unheld slot publishes nothing | done when: green | evidence: LoopFailureTest: cancel of booked slot = one event + SLOT_CANCELLED suggestion, unheld slot = no event | commit:
+- [x] 4.4 Dedupe and failure paths through the loop  (T-4 duplicates, AI failure not silent)
+      files: test/service/LoopFailureTest.java, service/RescheduleService.java (fixes only) | test: repeated trigger creates no duplicate; fake LLM failure still yields a RULES suggestion with cause; ROUTINE pediatric appointment gets `attention_reason NO_CANDIDATE_SLOT` | done when: green | evidence: LoopFailureTest: repeat plan no duplicate; fake TIMEOUT gives RULES + cause; pediatric ROUTINE gets NO_CANDIDATE_SLOT, no LLM call | commit:
+- [x] 4.5 Thread-based concurrency tests  (AGT-3, I1, I2)
+      files: test/service/ConcurrentAcceptTest.java | test: N threads accept two suggestions for one slot gives exactly one 200 and the rest 409; same suggestion twice gives one success; N concurrent bookings of one slot gives one 201 | done when: green and repeatable (run 5x) | evidence: ConcurrentAcceptTest, 3 scenarios x 5 repeats x 6 threads, all green | commit:
+- [x] 4.6 End-to-end walkthrough test  (brief walkthrough trace, demo)
+      files: test/service/OfflineLoopTest.java (covers the walkthrough) | test: book, PRV-001 OFFLINE, suggestions appear, accept first (200), accept second (409) | done when: green | evidence: OfflineLoopTest | commit:
 
 ### S5 UI  (window 130-150)
 - [ ] 5.1 API client, polling hook (4 s), queue list with suggestion card, badges, loading/error  (T-5 floor)

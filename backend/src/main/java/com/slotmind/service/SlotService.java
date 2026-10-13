@@ -3,6 +3,7 @@ package com.slotmind.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,6 +19,7 @@ import com.slotmind.domain.AppointmentStatus;
 import com.slotmind.domain.Slot;
 import com.slotmind.domain.SlotRepository;
 import com.slotmind.domain.SlotStatus;
+import com.slotmind.domain.TriggerReason;
 
 import org.springframework.data.domain.Page;
 
@@ -30,9 +32,12 @@ public class SlotService {
 
 	private final AppointmentRepository appointments;
 
-	public SlotService(SlotRepository slots, AppointmentRepository appointments) {
+	private final ApplicationEventPublisher events;
+
+	public SlotService(SlotRepository slots, AppointmentRepository appointments, ApplicationEventPublisher events) {
 		this.slots = slots;
 		this.appointments = appointments;
+		this.events = events;
 	}
 
 	@Transactional(readOnly = true)
@@ -73,6 +78,9 @@ public class SlotService {
 			affected.add(a.getId());
 		});
 		slots.saveAndFlush(slot);
+		if (!affected.isEmpty()) {
+			events.publishEvent(new RescheduleRequested(TriggerReason.SLOT_CANCELLED, List.copyOf(affected)));
+		}
 		return new SlotStatusResponse(SlotResponse.from(slot), affected, !affected.isEmpty());
 	}
 
