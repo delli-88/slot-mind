@@ -98,7 +98,7 @@ Expected answer:
 | Setting | Value | Reason |
 |---|---|---|
 | Client | `AnthropicOkHttpClient.builder().apiKey(<llm.api.key>)`; key only from `LLM_API_KEY` via `llm.api.key`; never logged | secrets rule |
-| Model | `slotmind.llm.model`, default `claude-opus-5-5` | open question Q-AI1: `claude-haiku-5-5` is far cheaper and faster, measure before the demo |
+| Model | `slotmind.llm.model`, default `claude-sonnet-5-5` | Q-AI1 resolved by the user at S3 (Sonnet); `claude-haiku-5-5` stays the cheaper option |
 | Sampling | none sent | `temperature`/`top_p`/`top_k` return 400 on these models |
 | Thinking | parameter omitted (always on, adaptive); `output_config.effort = LOW` (`slotmind.llm.effort`) | small closed-choice task; keeps latency low |
 | `max_tokens` | 2048 | thinking tokens share this budget; the answer itself is under 150 tokens |

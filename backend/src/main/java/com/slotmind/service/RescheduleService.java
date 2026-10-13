@@ -11,21 +11,27 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.slotmind.ai.AiMetrics;
+import com.slotmind.ai.FallbackCause;
 import com.slotmind.api.SuggestionResponse;
 import com.slotmind.domain.Appointment;
 import com.slotmind.domain.AppointmentRepository;
 import com.slotmind.domain.AppointmentStatus;
 import com.slotmind.domain.AttentionReason;
 import com.slotmind.domain.Provider;
+import com.slotmind.domain.ProviderStatus;
 import com.slotmind.domain.RescheduleSuggestion;
 import com.slotmind.domain.Slot;
 import com.slotmind.domain.SlotRepository;
+import com.slotmind.domain.SlotStatus;
 import com.slotmind.domain.SuggestionRepository;
 import com.slotmind.domain.SuggestionStatus;
 import com.slotmind.domain.TriggerReason;
 import com.slotmind.scheduling.SchedulingStrategy.Recommendation;
 import com.slotmind.scheduling.SchedulingStrategy.SchedulingRequest;
+import com.slotmind.scheduling.RuleBasedStrategy;
 import com.slotmind.scheduling.StrategyRegistry;
+import com.slotmind.domain.SuggestionSource;
 
 /**
  * Plans one suggestion: short read transaction (snapshot) -> strategy with NO transaction open (the AI strategy
@@ -53,8 +59,11 @@ public class RescheduleService {
 
 	private final Clock clock;
 
+	private final AiMetrics metrics;
+
 	public RescheduleService(PlatformTransactionManager tm, AppointmentRepository appointments, SlotRepository slots,
-			SuggestionRepository suggestions, SnapshotBuilder snapshots, StrategyRegistry registry, Clock clock) {
+			SuggestionRepository suggestions, SnapshotBuilder snapshots, StrategyRegistry registry, Clock clock,
+			AiMetrics metrics) {
 		this.readTx = new TransactionTemplate(tm);
 		this.readTx.setReadOnly(true);
 		this.writeTx = new TransactionTemplate(tm);
@@ -64,6 +73,7 @@ public class RescheduleService {
 		this.snapshots = snapshots;
 		this.registry = registry;
 		this.clock = clock;
+		this.metrics = metrics;
 	}
 
 	/**
@@ -109,13 +119,19 @@ public class RescheduleService {
 
 	private SuggestionResponse persist(String appointmentId, TriggerReason trigger, List<Recommendation> ranked) {
 		Appointment a = appointments.findById(appointmentId).orElseThrow();
-		if (ranked.isEmpty()) {
+		Recommendation best = ranked.isEmpty() ? null : ranked.get(0);
+		if (best != null && !stillOffered(best)) {
+			// The strategy may have run for seconds (AI call): the slot can be gone. Re-plan once on fresh data (AI_LAYER 7.12).
+			metrics.fallback(FallbackCause.SLOT_NOT_OPEN, appointmentId, trigger);
+			List<Recommendation> fresh = registry.resolve(RuleBasedStrategy.NAME).recommend(snapshots.build(a, trigger));
+			best = fresh.isEmpty() ? null : withCause(fresh.get(0), FallbackCause.SLOT_NOT_OPEN);
+		}
+		if (best == null) {
 			if (a.getStatus() == AppointmentStatus.RESCHEDULE_PENDING) {
 				a.needsAttention(AttentionReason.NO_CANDIDATE_SLOT);
 			}
 			return null;
 		}
-		Recommendation best = ranked.get(0);
 		Slot slot = slots.findById(best.slotId()).orElseThrow();
 		Provider alternate = best.alternateProviderId() == null ? null : slot.getProvider();
 		RescheduleSuggestion s = new RescheduleSuggestion(Ids.next("SUG"), a, slot, alternate, best.confidence(),
@@ -126,6 +142,17 @@ public class RescheduleService {
 		a.clearAttention();
 		suggestions.saveAndFlush(s);
 		return SuggestionResponse.from(s);
+	}
+
+	private boolean stillOffered(Recommendation r) {
+		return slots.findById(r.slotId()).filter(slot -> slot.getStatus() == SlotStatus.OPEN
+				&& slot.getStartTime().isAfter(clock.instant()) && slot.getProvider().getStatus() != ProviderStatus.OFFLINE)
+				.isPresent();
+	}
+
+	private static Recommendation withCause(Recommendation r, FallbackCause cause) {
+		return new Recommendation(r.slotId(), r.providerId(), r.alternateProviderId(), r.confidence(), r.reasoning(),
+				SuggestionSource.RULES, cause.name());
 	}
 
 	private void flag(String appointmentId, AttentionReason reason) {

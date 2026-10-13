@@ -56,7 +56,7 @@ Format (the brief's): **Context -> Options -> Decision -> Tradeoffs**. Each entr
 **Answers:** T-3, I4, I7, I10.
 **Context:** The model can invent ids, pick unavailable slots, refuse, time out or return malformed JSON. Details in AI_LAYER.md.
 **Options:** (a) trust the model output; (b) constrain with structured outputs only; (c) closed candidate set + strict parsing + membership validation + deterministic fallback + human accept.
-**Decision:** (c). The model chooses only among slot ids we send; any validation failure uses `RuleBasedStrategy` and records `fallbackCause`; the model never writes data. Official `anthropic-java` SDK behind our `LlmClient` interface. `temperature` is not sent because current Claude models reject it; thinking stays on with effort `LOW`. Model is configurable, default `claude-opus-5-5` (Haiku 5.5 is the cheaper option to evaluate). Two prompts by trigger.
+**Decision:** (c). The model chooses only among slot ids we send; any validation failure uses `RuleBasedStrategy` and records `fallbackCause`; the model never writes data. Official `anthropic-java` SDK behind our `LlmClient` interface. `temperature` is not sent because current Claude models reject it; thinking stays on with effort `LOW`. Model is configurable, default `claude-sonnet-5-5` (user choice at S3; Haiku 5.5 is the cheaper option, Opus 5.5 the strongest). Two prompts by trigger.
 **Tradeoffs:** Output is not bit-for-bit deterministic; the validator and fallback absorb that. Opus-class latency at low effort may approach the 8 s timeout, in which case the fallback answers. Server-side `fallbacks` on refusal was not used; our own rules fallback covers it.
 
 ## ADR-009: Polling for the UI queue, SSE only as the bonus

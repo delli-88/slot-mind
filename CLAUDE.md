@@ -30,4 +30,4 @@ Read in order: this file; TASKS.md "Current state" and last 5 BUILD_LOG entries;
 Budget 3 h: S0 0-20, S1 20-35, S2 35-75, S3 75-100, S4 100-130, S5 130-150, FREEZE at 150, S6 150-180 (README, ADR final, secrets scan, clean-shell run, demo, push). Report ahead/behind in minutes at every boundary and `status`. Cut order when behind >15 min: UI polish, SSE, extras beyond the brief, deployment, tests beyond failure paths. Never cut: validation, fallback, conflict handling, main-flow integration tests, README, ADR, secrets scan.
 
 ## Project facts
-Package `com.slotmind`; Spring Boot 3.5, Java 21, Maven (`backend/mvnw`), H2 default and tests, Postgres via `docker compose` (profile `postgres`, port 5433); UI in `ui/` (Vite, React 18, proxy to :8080). Claude model is `slotmind.llm.model` (default `claude-opus-5-5`), no sampling params.
+Package `com.slotmind`; Spring Boot 3.5, Java 21, Maven (`backend/mvnw`), H2 default and tests, Postgres via `docker compose` (profile `postgres`, port 5433); UI in `ui/` (Vite, React 18, proxy to :8080). Claude model is `slotmind.llm.model` (default `claude-sonnet-5-5`), no sampling params.

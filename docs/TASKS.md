@@ -1,8 +1,8 @@
-# Task board     Budget: 3h   Start: 12:21 (user: 30 min elapsed at 12:51)   Freeze: 14:51 (minute 150)   End: 15:21   Now: 13:25
+# Task board     Budget: 3h   Start: 12:21 (user: 30 min elapsed at 12:51)   Freeze: 14:51 (minute 150)   End: 15:21   Now: 13:58
 Legend: TODO · DOING · DONE · BLOCKED · CUT
 
 ## Current state (rewrite fully on every update)
-Sprint: S2 complete (2.1-2.8), full suite 83 tests green; user rule: tests written per sprint | Running: yes (context loads, /actuator/health UP in test) | Broken: nothing | Uncommitted files: docs/*, CLAUDE.md, backend package move to com.slotmind, pom.xml, application.properties, ClockConfig, tests | Last commit: 486f2a1 feat(s1) | Next 3: 3.1, 3.2, 3.3 | Open questions: Q-AI1 default model (Opus 5.5 default kept); task-size floor accepted by default | Time: ~12 min behind plan (S0 took 30 min, S1 window was 20-35)
+Sprint: S3 code and tests complete (3.1-3.5), full suite green (0 failures); real Claude call NOT yet made (LLM_API_KEY not set in the shell) | Running: yes | Broken: nothing | Uncommitted: S3 (ai/ package, RescheduleService persist re-check, application.properties, tests, docs) | Last commit: 21a84bc feat(s2) | Next 3: real call with key (3.5), then S4 4.1, 4.2, 4.3 | Open questions: key for the manual call | Time: minute ~97 of 150, on plan (S3 window ends at 100)
 
 ## Sprints
 | ID | Sprint | Window (min) | Est. task minutes | Exit criteria | Status |
@@ -10,7 +10,7 @@ Sprint: S2 complete (2.1-2.8), full suite 83 tests green; user rule: tests writt
 | S0 | Read, customise, design docs approved | 0-20 | n/a | PROBLEM, DESIGN, AI_LAYER, ADR, TASKS approved | written, awaiting approval |
 | S1 | Skeleton + first vertical slice | 20-35 | 17 | app runs, health UP, seed loaded, GET /providers + integration test, error body | TODO |
 | S2 | Core domain | 35-75 | 41 | core endpoints with validation, error body, state rules, rule engine, tests | TODO |
-| S3 | AI layer | 75-100 | 24 | gateway wrapped, prompts, validator, fallback, AI tests green, one real call verified | TODO |
+| S3 | AI layer | 75-100 | 24 | gateway wrapped, prompts, validator, fallback, AI tests green, one real call verified | code+tests DONE, real call pending key |
 | S4 | Agentic loop and concurrency | 100-130 | 30 | after-commit trigger, suggestion queue, offline re-plan, 409 + thread test, end-to-end trace | TODO |
 | S5 | UI | 130-150 | 20 | one screen: data, queue, accept/reject, trigger badge, polling | TODO |
 | S6 | Prove and ship | 150-180 (feature freeze at 150) | 30 | README, ADR final, secrets scan, clean-shell run, demo script, user makes repo public | TODO |
@@ -59,16 +59,16 @@ Rows: goal (req/rubric) | files | test | done when | evidence | commit. Files pe
       files: api/SuggestionController.java, DecisionResponse.java, service/SuggestionService.java, test/api/DecisionApiTest.java | test: IT accept moves appointment to RESCHEDULED, old slot OPEN, new slot BOOKED; reject keeps RESCHEDULE_PENDING; 409 for stale slot / not pending / offline provider; rollback leaves nothing partial | done when: green | evidence: DecisionApiTest 9 green incl. 6-thread double accept (1x200, 5x409), repeated 3x stable | commit:
 
 ### S3 AI layer  (window 75-100)
-- [ ] 3.1 `LlmClient` seam, `FakeLlmClient`, `LLMGateway` on `anthropic-java`, startup key check  (T-3, I10)
-      files: ai/LlmClient.java, ai/LLMGateway.java, config/LlmProperties.java, test/ai/FakeLlmClient.java, test/ai/LlmGatewayTest.java | test: blank key means no network call and a clear exception; timeout config applied; key never in toString/logs | done when: green | evidence: | commit:
-- [ ] 3.2 `PromptBuilder`: two system prompts, user template, name sanitising, local time format  (T-3 two prompts, AGT-2)
-      files: ai/PromptBuilder.java, test/ai/PromptBuilderTest.java | test: A17, A18 (marker text per trigger; no patient name; injected provider name sanitised) | done when: green | evidence: | commit:
-- [ ] 3.3 `LlmResponseValidator`: extract, strict parse, membership, provider, confidence, reasoning cleaning  (T-3 validation, I7)
-      files: ai/LlmSuggestion.java, ai/LlmResponseValidator.java, ai/FallbackCause.java, test/ai/LlmResponseValidatorTest.java | test: A1-A3, A6-A13 | done when: green, every failure returns a typed cause | evidence: | commit:
-- [ ] 3.4 `AiStrategy`: call, repair retry, fallback to rules, counters  (T-3 fallback, T-2)
-      files: scheduling/AiStrategy.java, ai/AiMetrics.java, test/scheduling/AiStrategyTest.java | test: A4, A5, A14, A15, A16, A21 with fake client | done when: green | evidence: | commit:
-- [ ] 3.5 Wire into `RescheduleService`: persist-time slot re-check, no-candidate skips the LLM, config switch; one real call  (T-3, I3)
-      files: service/RescheduleService.java, application.properties, test/service/AiRescheduleTest.java, docs/BUILD_LOG.md | test: A19, A20, `strategy=ai/rule` switching; manual real call recorded | done when: green; real call result logged | evidence: | commit:
+- [x] 3.1 `LlmClient` seam, `FakeLlmClient`, `LLMGateway` on `anthropic-java`, startup key check  (T-3, I10)
+      files: ai/LlmClient.java, ai/LLMGateway.java, ai/LlmProperties.java, test/ai/FakeLlmClient.java, test/ai/LlmGatewayTest.java | test: blank key means no network call and a clear exception; timeout config applied; key never in toString/logs | done when: green | evidence: LlmGatewayTest 3 green (blank key -> NO_API_KEY, no network; key absent from toString; settings applied) | commit:
+- [x] 3.2 `PromptBuilder`: two system prompts, user template, name sanitising, local time format  (T-3 two prompts, AGT-2)
+      files: ai/PromptBuilder.java, test/ai/PromptBuilderTest.java | test: A17, A18 (marker text per trigger; no patient name; injected provider name sanitised) | done when: green | evidence: PromptBuilderTest 5 green (A17, A18 incl. injected provider name) | commit:
+- [x] 3.3 `LlmResponseValidator`: extract, strict parse, membership, provider, confidence, reasoning cleaning  (T-3 validation, I7)
+      files: ai/LlmSuggestion.java, ai/LlmResponseValidator.java, ai/FallbackCause.java, test/ai/LlmResponseValidatorTest.java | test: A1-A3, A6-A13 | done when: green, every failure returns a typed cause | evidence: LlmResponseValidatorTest 12 green (A1-A3, A6-A13); a12 failed twice, code fixed, assertions unchanged | commit:
+- [x] 3.4 `AiStrategy`: call, repair retry, fallback to rules, counters  (T-3 fallback, T-2)
+      files: ai/AiStrategy.java (in ai/, not scheduling/, so scheduling stays dependency-free), ai/AiMetrics.java, test/scheduling/AiStrategyTest.java | test: A4, A5, A14, A15, A16, A21 with fake client | done when: green | evidence: AiStrategyTest 12 green (A4, A5, A14-A16, A20, A21, repair budget, cap) | commit:
+- [x] 3.5 Wire into `RescheduleService`: persist-time slot re-check, no-candidate skips the LLM, config switch; one real call  (T-3, I3)
+      files: service/RescheduleService.java, application.properties, test/service/AiRescheduleTest.java, docs/BUILD_LOG.md | test: A19, A20, `strategy=ai/rule` switching; manual real call recorded | done when: green; real call result logged | evidence: AiRescheduleTest 6 green (A19, A20, ai/rule switching, cause persisted). Real call PENDING: needs LLM_API_KEY | commit:
 
 ### S4 Agentic loop and concurrency  (window 100-130)
 - [ ] 4.1 Async executor, `RescheduleRequested` event, `RescheduleHandler` (AFTER_COMMIT, per-id try/catch)  (T-4, ADR-005)
