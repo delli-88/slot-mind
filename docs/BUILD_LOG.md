@@ -1,0 +1,30 @@
+# Build log
+
+Time-ordered. Times are elapsed minutes from the start clock (to be filled once the start time is known). Each task adds an entry right after it finishes.
+
+## Entries
+| # | Elapsed | Task | What happened | Evidence |
+|---|---|---|---|---|
+| 1 | 0 | S0 read brief | Read the HTML brief and repo (starter: Spring Boot 3.5.16, Java 21, Vite React 18.3.1, no domain code). Reported differences. User decided: 3 h budget, rejected suggestion keeps RESCHEDULE_PENDING, same-specialty alternates (URGENT any), React with polling, Claude API | user answers D1-D5 |
+| 2 | | S0 PROBLEM.md | Requirements, rubric, invariants I1-I10, assumptions A1-A7 | docs/PROBLEM.md |
+| 3 | | S0 DESIGN.md | Architecture, ERD, 11 endpoint contracts, 4 flows, error model | docs/DESIGN.md |
+| 4 | | S0 AI_LAYER.md | Two prompts, validation pipeline, fallback, 21 AI tests; adapted from the reference example | docs/AI_LAYER.md |
+| 5 | | S0 ADR, TASKS, BUILD_LOG, CLAUDE | ADR-001..010, board with 28 build tasks, project rules | docs/ADR.md, TASKS.md |
+
+| 6 | 37 | 1.1 bootstrap | Moved to `com.slotmind`, added `anthropic-java` 2.34.0, `slotmind.*` props, `open-in-view=false`, `Clock` bean, shared `@IntegrationTest` annotation (seed off). Test failed first on the missing Clock bean, then passed | `./mvnw -q -B test`: 2 tests green |
+| 7 | 45 | 1.2 Provider/Slot | Entities with @Version, transition methods, IllegalTransitionException, repos. User changed process: tests per sprint, not per task (time) | SlotTransitionTest 7 green |
+| 8 | 70 | 1.3-1.6 | Appointment/Suggestion entities, SeedData (Addendum A), error model + handler, GET /providers. Tests batched at sprint end per user. Each test class gets its own H2 db (random uuid) to avoid shared in-memory name clashes | 26 tests green, 0 failures |
+
+## Bugs we hit
+| Symptom | Hypothesis | How found | Fix | Lesson |
+|---|---|---|---|---|
+| (none yet) | | | | |
+
+## AI corrections (where the assistant or the user got it wrong, and how it was caught)
+| Where | Wrong | Caught by | Fix |
+|---|---|---|---|
+| Brief header | "115 pts total" but the six task weights sum to 117 | adding the task weights during `read brief` | PROBLEM.md uses 117 plus bonuses |
+| Reference AI example | specified `temperature 0` | Claude API reference: current models reject `temperature`, `top_p`, `top_k` with a 400 | AI_LAYER.md drops sampling params; determinism from closed set, validation and fallback |
+| DESIGN.md first draft | planned a hand-written `RestClient` for the Claude API | Claude API guidance: use the official SDK in Java projects | switched to `anthropic-java`; stack line updated |
+| PROBLEM.md A4 and DESIGN.md 422 example | said APT-003 would have no candidate | tracing seed data against decision D3 (URGENT may use any provider) while writing ADR/TASKS | examples now use a non-urgent pediatric appointment; APT-003 gets a tier-3 suggestion |
+| Earlier chat reply | claimed the "pediatric edge case" for APT-003 | same trace as above | corrected in docs; noted here |
