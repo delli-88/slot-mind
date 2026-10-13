@@ -2,7 +2,7 @@
 Legend: TODO · DOING · DONE · BLOCKED · CUT
 
 ## Current state (rewrite fully on every update)
-Sprint: S4 complete (4.1-4.6), full suite 146 tests green, app boots and the offline loop runs against the real app | Running: yes | Broken: nothing known; PARSE_ERROR on first real call still unexplained | Uncommitted: all S4 code, tests, docs | Last commit: 008d5b7 | Next 3: 5.1, 5.2, 5.3 (React UI) | Open questions: intermittent PARSE_ERROR (consider max-tokens 4096) | Time: 14:00 = minute 99 of 150, on plan (S4 window ended at 130)
+Sprint: S5 complete (5.1-5.3; 5.4 SSE cut) | Running: yes | Broken: nothing known; real model call failed with GATEWAY_ERROR when the key was not set in this shell (shows as RULES fallback in the UI, as designed) | Uncommitted: ui/ | Last commit: 86c0735 feat(s4) | Next 3: 6.1 README, 6.2 ADR final, 6.3 secrets scan | Open questions: PARSE_ERROR rate | Time: 14:09 = minute 108 of 150, 22 min ahead of the S5 end (130 to 150 window)
 
 ## Sprints
 | ID | Sprint | Window (min) | Est. task minutes | Exit criteria | Status |
@@ -85,14 +85,14 @@ Rows: goal (req/rubric) | files | test | done when | evidence | commit. Files pe
       files: test/service/OfflineLoopTest.java (covers the walkthrough) | test: book, PRV-001 OFFLINE, suggestions appear, accept first (200), accept second (409) | done when: green | evidence: OfflineLoopTest | commit:
 
 ### S5 UI  (window 130-150)
-- [ ] 5.1 API client, polling hook (4 s), queue list with suggestion card, badges, loading/error  (T-5 floor)
-      files: ui/src/api.js, ui/src/usePolling.js, ui/src/App.jsx, ui/src/App.css, ui/src/components/Queue.jsx | test: `npm run lint` and `npm run build` pass; manual: queue shows APT-001/002 after OFFLINE | done when: fields match DESIGN section 3 | evidence: | commit:
-- [ ] 5.2 Accept/Reject, 409 message from `details[0]`, needs-attention row with Request suggestion  (T-5 floor)
-      files: ui/src/components/Queue.jsx, ui/src/api.js, ui/src/App.css | test: lint, build, manual second accept shows slot-taken message | done when: green | evidence: | commit:
-- [ ] 5.3 Providers panel with OFFLINE/AVAILABLE buttons and slot list  (T-5 floor)
-      files: ui/src/components/Providers.jsx, ui/src/components/Slots.jsx, ui/src/App.jsx | test: lint, build, manual full demo path | done when: demo path works in the browser | evidence: | commit:
-- [ ] 5.4 [OPTIONAL, first cut] `POST /appointments/{id}/suggest/stream` SSE bonus  (+5)
-      files: api/StreamController.java, test/api/StreamApiTest.java | test: IT receives status then result events | done when: green | evidence: | commit:
+- [x] 5.1 API client, polling hook (4 s), queue list with suggestion card, badges, loading/error  (T-5 floor)
+      files: ui/src/api.js, ui/src/usePolling.js, ui/src/App.jsx, ui/src/App.css, ui/src/components/Queue.jsx | test: `npm run lint` and `npm run build` pass; manual: queue shows APT-001/002 after OFFLINE | done when: fields match DESIGN section 3 | evidence: lint 0 warnings, build ok; polling via usePolling (4 s), queue shows RESCHEDULE_PENDING with suggestion cards (source, fallback, trigger, confidence badges) | commit:
+- [x] 5.2 Accept/Reject, 409 message from `details[0]`, needs-attention row with Request suggestion  (T-5 floor)
+      files: ui/src/components/Queue.jsx, ui/src/api.js, ui/src/App.css | test: lint, build, manual second accept shows slot-taken message | done when: green | evidence: 409/422 text from details[0] shown on the card; Request suggestion button for attention rows; accept via proxy returned 200 against the real app | commit:
+- [x] 5.3 Providers panel with OFFLINE/AVAILABLE buttons and slot list  (T-5 floor)
+      files: ui/src/components/Providers.jsx, ui/src/components/Slots.jsx, ui/src/App.jsx | test: lint, build, manual full demo path | done when: demo path works in the browser | evidence: Providers and Slots panels with OFFLINE/AVAILABLE and Cancel; OFFLINE via the Vite proxy against the running backend queued both suggestions | commit:
+- [-] 5.4 [OPTIONAL, first cut] `POST /appointments/{id}/suggest/stream` SSE bonus  (+5)
+      files: api/StreamController.java, test/api/StreamApiTest.java | test: IT receives status then result events | done when: green | evidence: CUT (optional, per cut order) | commit:
 
 ### S6 Prove and ship  (150-180, freeze at 150)
 - [ ] 6.1 README: run, env vars, docker, tests, endpoint list, demo notes, known limits  (deliverable)
