@@ -14,11 +14,12 @@ Time-ordered. Times are elapsed minutes from the start clock (to be filled once 
 | 6 | 37 | 1.1 bootstrap | Moved to `com.slotmind`, added `anthropic-java` 2.34.0, `slotmind.*` props, `open-in-view=false`, `Clock` bean, shared `@IntegrationTest` annotation (seed off). Test failed first on the missing Clock bean, then passed | `./mvnw -q -B test`: 2 tests green |
 | 7 | 45 | 1.2 Provider/Slot | Entities with @Version, transition methods, IllegalTransitionException, repos. User changed process: tests per sprint, not per task (time) | SlotTransitionTest 7 green |
 | 8 | 70 | 1.3-1.6 | Appointment/Suggestion entities, SeedData (Addendum A), error model + handler, GET /providers. Tests batched at sprint end per user. Each test class gets its own H2 db (random uuid) to avoid shared in-memory name clashes | 26 tests green, 0 failures |
+| 9 | 77 | 2.1-2.8 | Booking, list/get, provider and slot status, rule engine + registry, RescheduleService (snapshot tx -> strategy -> write tx), suggest, accept/reject. Tests batched at sprint end. `rescheduleQueued` is true when appointments were stranded, but the event is not published until S4 | 83 tests green; thread test 3 extra runs stable |
 
 ## Bugs we hit
 | Symptom | Hypothesis | How found | Fix | Lesson |
 |---|---|---|---|---|
-| (none yet) | | | | |
+| 4 S2 tests failed on first run (sort, 3 planner tests) | production sort or ranking wrong | read assertion output: sort test collected nested `pendingSuggestion.recommendedSlot.startTime` too; planner tests got `SLT-F3`, an earlier test's open slot in the shared per-class DB | fixed the tests only: read `/slot/startTime` per item; targets became same-provider (tier 1) slots; one new test uses SPECIALIST so it cannot leak into the PEDIATRIC no-candidate test. Assertions not weakened | tests that rank over all open slots must control which slots exist |
 
 ## AI corrections (where the assistant or the user got it wrong, and how it was caught)
 | Where | Wrong | Caught by | Fix |

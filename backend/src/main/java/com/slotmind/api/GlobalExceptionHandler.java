@@ -6,7 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.slotmind.domain.IllegalTransitionException;
+import com.slotmind.service.BadRequestException;
 import com.slotmind.service.ConflictException;
 import com.slotmind.service.NotFoundException;
 import com.slotmind.service.UnprocessableException;
@@ -43,7 +45,19 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	ResponseEntity<ApiError> unreadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+		if (ex.getCause() instanceof InvalidFormatException ife && ife.getTargetType().isEnum()) {
+			String field = ife.getPath().isEmpty() ? "body" : ife.getPath().get(ife.getPath().size() - 1).getFieldName();
+			String allowed = String.join(", ", java.util.Arrays.stream(ife.getTargetType().getEnumConstants())
+					.map(Object::toString).toList());
+			return build(HttpStatus.BAD_REQUEST, "Validation failed", req,
+					List.of(field + ": must be one of " + allowed));
+		}
 		return build(HttpStatus.BAD_REQUEST, "Malformed JSON or invalid value", req, List.of());
+	}
+
+	@ExceptionHandler(BadRequestException.class)
+	ResponseEntity<ApiError> badRequest(BadRequestException ex, HttpServletRequest req) {
+		return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req, ex.getDetails());
 	}
 
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -78,7 +92,7 @@ public class GlobalExceptionHandler {
 				List.of("ILLEGAL_TRANSITION: " + ex.getMessage()));
 	}
 
-	@ExceptionHandler({ OptimisticLockingFailureException.class, DataIntegrityViolationException.class })
+	@ExceptionHandler({ ConcurrencyFailureException.class, DataIntegrityViolationException.class })
 	ResponseEntity<ApiError> concurrent(Exception ex, HttpServletRequest req) {
 		return build(HttpStatus.CONFLICT, "Resource was modified concurrently, retry", req,
 				List.of("CONCURRENT_UPDATE"));

@@ -1,8 +1,8 @@
-# Task board     Budget: 3h   Start: 12:21 (user: 30 min elapsed at 12:51)   Freeze: 14:51 (minute 150)   End: 15:21   Now: 12:58
+# Task board     Budget: 3h   Start: 12:21 (user: 30 min elapsed at 12:51)   Freeze: 14:51 (minute 150)   End: 15:21   Now: 13:25
 Legend: TODO · DOING · DONE · BLOCKED · CUT
 
 ## Current state (rewrite fully on every update)
-Sprint: S1 complete (1.1-1.6), full suite 26 tests green; user rule: tests written per sprint | Running: yes (context loads, /actuator/health UP in test) | Broken: nothing | Uncommitted files: docs/*, CLAUDE.md, backend package move to com.slotmind, pom.xml, application.properties, ClockConfig, tests | Last commit: 6bd6694 chore: generic starter scaffold | Next 3: 2.1, 2.2, 2.3 | Open questions: Q-AI1 default model (Opus 5.5 default kept); task-size floor accepted by default | Time: ~12 min behind plan (S0 took 30 min, S1 window was 20-35)
+Sprint: S2 complete (2.1-2.8), full suite 83 tests green; user rule: tests written per sprint | Running: yes (context loads, /actuator/health UP in test) | Broken: nothing | Uncommitted files: docs/*, CLAUDE.md, backend package move to com.slotmind, pom.xml, application.properties, ClockConfig, tests | Last commit: 486f2a1 feat(s1) | Next 3: 3.1, 3.2, 3.3 | Open questions: Q-AI1 default model (Opus 5.5 default kept); task-size floor accepted by default | Time: ~12 min behind plan (S0 took 30 min, S1 window was 20-35)
 
 ## Sprints
 | ID | Sprint | Window (min) | Est. task minutes | Exit criteria | Status |
@@ -41,22 +41,22 @@ Rows: goal (req/rubric) | files | test | done when | evidence | commit. Files pe
       files: api/ProviderResponse.java, service/ProviderService.java, api/ProviderController.java, test/api/ProviderApiTest.java | test: IT 200 seed list sorted by name | done when: green and app runs against H2 | evidence: ProviderApiTest 1 test green | commit:
 
 ### S2 Core domain  (window 35-75)
-- [ ] 2.1 `POST /appointments`  (T-1, 3.1)
-      files: api/AppointmentRequest.java, AppointmentResponse.java, AppointmentController.java, service/AppointmentService.java, test/api/BookAppointmentTest.java | test: IT 201 + Location, 400 field errors, 404, 409 SLOT_NOT_OPEN / PROVIDER_OFFLINE | done when: slot becomes BOOKED | evidence: | commit:
-- [ ] 2.2 `GET /appointments` paged + filter, `GET /appointments/{id}`  (T-1, 3.2, 3.3)
-      files: api/PageResponse.java, AppointmentController.java, service/AppointmentService.java, repository query, test/api/ListAppointmentsTest.java | test: IT status filter, size capped at 50, sort by slot start, 400 bad status, 404, embeds pending suggestion with one query | done when: green | evidence: | commit:
-- [ ] 2.3 `PATCH /providers/{id}/status` (state change + marks CONFIRMED appointments RESCHEDULE_PENDING, no event yet)  (T-1, 3.5)
-      files: api/ProviderController.java, ProviderStatusRequest/Response.java, service/ProviderService.java, test/api/ProviderStatusTest.java | test: IT PRV-001 OFFLINE returns [APT-001, APT-002]; same status no-op; 400/404 | done when: green | evidence: | commit:
-- [ ] 2.4 `GET /slots` and `PATCH /slots/{id}/status` (CANCELLED only)  (T-1, 3.6, 3.7)
-      files: api/SlotController.java, SlotStatusRequest/Response.java, service/SlotService.java, test/api/SlotApiTest.java | test: IT filter+paging; cancel marks holder RESCHEDULE_PENDING; non-CANCELLED target gives 409 ILLEGAL_TRANSITION | done when: green | evidence: | commit:
-- [ ] 2.5 Scheduling seam and rule engine  (T-2, 1.3, 1.4)
-      files: scheduling/SchedulingStrategy.java (with nested request/recommendation records), RuleBasedStrategy.java, StrategyRegistry.java, test/scheduling/RuleBasedStrategyTest.java, test/scheduling/StrategyRegistryTest.java | test: unit tiers, URGENT fallback, excluded slots, offline provider, ties, empty; registry picks by name | done when: green | evidence: | commit:
-- [ ] 2.6 `RescheduleService.plan` with rules only: snapshot, strategy, persist, dedupe, `attention_reason`  (T-2, T-4 core, I5, I6)
-      files: service/RescheduleService.java, service/SnapshotBuilder.java, api/SuggestionResponse.java (from-entity factory), test/service/RescheduleServiceTest.java | test: seed APT-001 and APT-002 both get SLT-005; duplicate (appointment, trigger) skipped; no candidate sets `attention_reason` | done when: green | evidence: | commit:
-- [ ] 2.7 `POST /appointments/{id}/suggest` (+ `?strategy=`)  (T-1, 3.8)
-      files: api/AppointmentController.java, service/AppointmentService.java, service/StrategyParam.java (validates `?strategy=`), test/api/SuggestApiTest.java | test: IT 201, 409 pending exists, 409 wrong status, 422 no candidate, 400 unknown strategy | done when: green | evidence: | commit:
-- [ ] 2.8 `PATCH /suggestions/{id}` accept and reject  (T-1 transactional accept, 3.9, I2)
-      files: api/SuggestionController.java, DecisionResponse.java, service/SuggestionService.java, test/api/DecisionApiTest.java | test: IT accept moves appointment to RESCHEDULED, old slot OPEN, new slot BOOKED; reject keeps RESCHEDULE_PENDING; 409 for stale slot / not pending / offline provider; rollback leaves nothing partial | done when: green | evidence: | commit:
+- [x] 2.1 `POST /appointments`  (T-1, 3.1)
+      files: api/AppointmentRequest.java, AppointmentResponse.java, AppointmentController.java, service/AppointmentService.java, test/api/BookAppointmentTest.java | test: IT 201 + Location, 400 field errors, 404, 409 SLOT_NOT_OPEN / PROVIDER_OFFLINE | done when: slot becomes BOOKED | evidence: BookAppointmentTest 8 green | commit:
+- [x] 2.2 `GET /appointments` paged + filter, `GET /appointments/{id}`  (T-1, 3.2, 3.3)
+      files: api/PageResponse.java, AppointmentController.java, service/AppointmentService.java, repository query, test/api/ListAppointmentsTest.java | test: IT status filter, size capped at 50, sort by slot start, 400 bad status, 404, embeds pending suggestion with one query | done when: green | evidence: ListAppointmentsTest 6 green | commit:
+- [x] 2.3 `PATCH /providers/{id}/status` (state change + marks CONFIRMED appointments RESCHEDULE_PENDING, no event yet)  (T-1, 3.5)
+      files: api/ProviderController.java, ProviderStatusRequest/Response.java, service/ProviderService.java, test/api/ProviderStatusTest.java | test: IT PRV-001 OFFLINE returns [APT-001, APT-002]; same status no-op; 400/404 | done when: green | evidence: ProviderStatusTest 4 green | commit:
+- [x] 2.4 `GET /slots` and `PATCH /slots/{id}/status` (CANCELLED only)  (T-1, 3.6, 3.7)
+      files: api/SlotController.java, SlotStatusRequest/Response.java, service/SlotService.java, test/api/SlotApiTest.java | test: IT filter+paging; cancel marks holder RESCHEDULE_PENDING; non-CANCELLED target gives 409 ILLEGAL_TRANSITION | done when: green | evidence: SlotApiTest 6 green | commit:
+- [x] 2.5 Scheduling seam and rule engine  (T-2, 1.3, 1.4)
+      files: scheduling/SchedulingStrategy.java (with nested request/recommendation records), RuleBasedStrategy.java, StrategyRegistry.java, test/scheduling/RuleBasedStrategyTest.java, test/scheduling/StrategyRegistryTest.java | test: unit tiers, URGENT fallback, excluded slots, offline provider, ties, empty; registry picks by name | done when: green | evidence: RuleBasedStrategyTest 7 + StrategyRegistryTest 3 green | commit:
+- [x] 2.6 `RescheduleService.plan` with rules only: snapshot, strategy, persist, dedupe, `attention_reason`  (T-2, T-4 core, I5, I6)
+      files: service/RescheduleService.java, service/SnapshotBuilder.java, api/SuggestionResponse.java (from-entity factory), test/service/RescheduleServiceTest.java | test: seed APT-001 and APT-002 both get SLT-005; duplicate (appointment, trigger) skipped; no candidate sets `attention_reason` | done when: green | evidence: RescheduleServiceTest 6 + SeedScenarioTest 2 green (demo: APT-001 and APT-002 both get SLT-005) | commit:
+- [x] 2.7 `POST /appointments/{id}/suggest` (+ `?strategy=`)  (T-1, 3.8)
+      files: api/AppointmentController.java, service/AppointmentService.java, service/StrategyParam.java (validates `?strategy=`), test/api/SuggestApiTest.java | test: IT 201, 409 pending exists, 409 wrong status, 422 no candidate, 400 unknown strategy | done when: green | evidence: SuggestApiTest 6 green | commit:
+- [x] 2.8 `PATCH /suggestions/{id}` accept and reject  (T-1 transactional accept, 3.9, I2)
+      files: api/SuggestionController.java, DecisionResponse.java, service/SuggestionService.java, test/api/DecisionApiTest.java | test: IT accept moves appointment to RESCHEDULED, old slot OPEN, new slot BOOKED; reject keeps RESCHEDULE_PENDING; 409 for stale slot / not pending / offline provider; rollback leaves nothing partial | done when: green | evidence: DecisionApiTest 9 green incl. 6-thread double accept (1x200, 5x409), repeated 3x stable | commit:
 
 ### S3 AI layer  (window 75-100)
 - [ ] 3.1 `LlmClient` seam, `FakeLlmClient`, `LLMGateway` on `anthropic-java`, startup key check  (T-3, I10)
