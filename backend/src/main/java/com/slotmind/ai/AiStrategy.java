@@ -76,6 +76,7 @@ public class AiStrategy implements SchedulingStrategy {
 				reply = llm.callLLM(prompt.system(), user, remaining);
 			}
 			catch (LlmException ex) {
+				log.warn("Model call failed: {} ({})", ex.getFallbackCause(), ex.getMessage());
 				return fallback(all, ex.getFallbackCause(), request);
 			}
 			catch (RuntimeException ex) {
@@ -86,7 +87,9 @@ public class AiStrategy implements SchedulingStrategy {
 			if (outcome.ok()) {
 				return new ArrayList<>(List.of(outcome.recommendation()));
 			}
-			log.debug("AI reply rejected: {} ({})", outcome.cause(), outcome.detail());
+			log.warn("AI reply rejected: {} ({})", outcome.cause(), outcome.detail());
+			log.debug("AI raw reply (first 500 chars): {}",
+					reply == null ? null : reply.substring(0, Math.min(reply.length(), 500)));
 			Duration left = props.timeout().minusNanos(System.nanoTime() - started);
 			if (!outcome.repairable() || attempt == 2 || left.compareTo(MIN_REPAIR_BUDGET) < 0) {
 				break;

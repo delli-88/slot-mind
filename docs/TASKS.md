@@ -2,7 +2,7 @@
 Legend: TODO · DOING · DONE · BLOCKED · CUT
 
 ## Current state (rewrite fully on every update)
-Sprint: S3 code and tests complete (3.1-3.5), full suite green (0 failures); real Claude call NOT yet made (LLM_API_KEY not set in the shell) | Running: yes | Broken: nothing | Uncommitted: S3 (ai/ package, RescheduleService persist re-check, application.properties, tests, docs) | Last commit: 21a84bc feat(s2) | Next 3: real call with key (3.5), then S4 4.1, 4.2, 4.3 | Open questions: key for the manual call | Time: minute ~97 of 150, on plan (S3 window ends at 100)
+Sprint: S3 complete incl. one real Claude call (claude-sonnet-5-5); suite green | Running: yes | Broken: nothing known; one unexplained PARSE_ERROR on the first real attempt (logging added, not reproduced) | Uncommitted: AiStrategy logging + docs | Last commit: d2adba5 feat(s3) | Next 3: 4.1, 4.2, 4.3 | Open questions: intermittent PARSE_ERROR rate (run a few calls with DEBUG on) | Time: ~minute 108 of 150, about 8 min behind the S4 start
 
 ## Sprints
 | ID | Sprint | Window (min) | Est. task minutes | Exit criteria | Status |
@@ -68,7 +68,7 @@ Rows: goal (req/rubric) | files | test | done when | evidence | commit. Files pe
 - [x] 3.4 `AiStrategy`: call, repair retry, fallback to rules, counters  (T-3 fallback, T-2)
       files: ai/AiStrategy.java (in ai/, not scheduling/, so scheduling stays dependency-free), ai/AiMetrics.java, test/scheduling/AiStrategyTest.java | test: A4, A5, A14, A15, A16, A21 with fake client | done when: green | evidence: AiStrategyTest 12 green (A4, A5, A14-A16, A20, A21, repair budget, cap) | commit:
 - [x] 3.5 Wire into `RescheduleService`: persist-time slot re-check, no-candidate skips the LLM, config switch; one real call  (T-3, I3)
-      files: service/RescheduleService.java, application.properties, test/service/AiRescheduleTest.java, docs/BUILD_LOG.md | test: A19, A20, `strategy=ai/rule` switching; manual real call recorded | done when: green; real call result logged | evidence: AiRescheduleTest 6 green (A19, A20, ai/rule switching, cause persisted). Real call PENDING: needs LLM_API_KEY | commit:
+      files: service/RescheduleService.java, application.properties, test/service/AiRescheduleTest.java, docs/BUILD_LOG.md | test: A19, A20, `strategy=ai/rule` switching; manual real call recorded | done when: green; real call result logged | evidence: AiRescheduleTest 6 green (A19, A20, ai/rule switching, cause persisted). Real call DONE (user-run, see BUILD_LOG 11): source LLM, confidence 0.6; one earlier run fell back with PARSE_ERROR, cause unknown | commit:
 
 ### S4 Agentic loop and concurrency  (window 100-130)
 - [ ] 4.1 Async executor, `RescheduleRequested` event, `RescheduleHandler` (AFTER_COMMIT, per-id try/catch)  (T-4, ADR-005)
