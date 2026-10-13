@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.slotmind.api.PageResponse;
 import com.slotmind.api.SlotResponse;
 import com.slotmind.api.SlotStatusResponse;
-import com.slotmind.domain.Appointment;
 import com.slotmind.domain.AppointmentRepository;
 import com.slotmind.domain.AppointmentStatus;
 import com.slotmind.domain.Slot;
