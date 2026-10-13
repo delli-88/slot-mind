@@ -77,7 +77,14 @@ function Row({ appointment, onChanged }) {
           onDecide={(id, status) => run(() => api.decide(id, status))}
         />
       )}
-      {planning && <p className="muted">Planning a new slot…</p>}
+      {planning && (
+        <div className="attention">
+          <span className="muted">No suggestion yet (planning, or the last one was rejected).</span>
+          <button className="secondary" disabled={busy} onClick={() => run(() => api.suggest(a.id))}>
+            Request suggestion
+          </button>
+        </div>
+      )}
       {a.attentionReason && (
         <div className="attention">
           <span className="badge warn">Needs attention: {a.attentionReason}</span>

@@ -50,7 +50,7 @@ Format (the brief's): **Context -> Options -> Decision -> Tradeoffs**. Each entr
 **Context:** Repeated PATCHes or concurrent triggers must not create duplicates. H2 has no partial unique indexes.
 **Options:** (a) check-then-insert in code (racy); (b) partial unique index (not portable); (c) nullable UNIQUE `pending_key` = `appointmentId:trigger` while PENDING, NULL once decided.
 **Decision:** (c). A duplicate insert violates the constraint and is skipped. The service also checks first to avoid noisy exceptions.
-**Tradeoffs:** One denormalised column maintained by the entity's `accept()`/`reject()`. Manual `/suggest` additionally returns 409 if any PENDING suggestion exists.
+**Tradeoffs:** One denormalised column maintained by the entity's `accept()`/`reject()`. The planner (loop and manual `/suggest` alike) is stricter: it refuses with 409 when the appointment has a PENDING suggestion of any trigger.
 
 ## ADR-008: AI is advisory, validated and always has a fallback
 **Answers:** T-3, I4, I7, I10.
@@ -99,6 +99,8 @@ Format (the brief's): **Context -> Options -> Decision -> Tradeoffs**. Each entr
 | Slot holds with expiry for suggestions | staff routinely collide on accepts (many simultaneous coordinators) |
 | Re-planning a `RESCHEDULED` appointment whose new provider goes offline (the brief re-plans `CONFIRMED` only) | immediately in sprint 2; it is one extra allowed transition and status in the loop query |
 | Auto-marking losing suggestions stale after a 409 | usability feedback shows staff confused by stale cards |
+| `POST /suggest/stream` SSE reasoning stream (brief bonus +5) | after the core is stable; cut for time, polling covers the UI |
+| UI ceiling (day view, waitlist panel, load view), booking form, create-provider and create-slot endpoints and forms | seed data and curl cover the demo; build when staff need self-service setup |
 | SSE/WebSocket push for the queue | roughly hundreds of concurrent viewers or sub-second latency needs (ADR-009) |
 | Caching, rate limiting, ETag polling | read load or abuse appears; ETag first |
 | Idempotency keys on writes | clients that auto-retry non-idempotent calls appear |

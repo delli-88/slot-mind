@@ -3,3 +3,38 @@ GET http://localhost:8080/actuator/health
 
 ### Health through the Vite dev proxy
 GET http://localhost:5173/actuator/health
+
+### ---- SlotMind demo path (backend on :8080) ----
+
+### Book a patient (use an OPEN slot id from GET /slots)
+POST http://localhost:8080/appointments
+Content-Type: application/json
+
+{ "patientName": "Maria Lopez", "type": "ROUTINE", "providerId": "PRV-004", "slotId": "SLT-005" }
+
+### Open slots
+GET http://localhost:8080/slots?status=OPEN
+
+### Trigger: Dr. Chen goes offline (returns at once, planning is asynchronous)
+PATCH http://localhost:8080/providers/PRV-001/status
+Content-Type: application/json
+
+{ "status": "OFFLINE" }
+
+### The queue: suggestions appear after a moment
+GET http://localhost:8080/appointments?status=RESCHEDULE_PENDING
+
+### On-demand suggestion (409 PENDING_SUGGESTION_EXISTS if the loop already made one)
+POST http://localhost:8080/appointments/APT-001/suggest?strategy=rule
+
+### Accept (replace the id; the second accept of the same slot returns 409 SLOT_NOT_OPEN)
+PATCH http://localhost:8080/suggestions/SUG-REPLACE-ME
+Content-Type: application/json
+
+{ "status": "ACCEPTED" }
+
+### Cancel a slot (second trigger)
+PATCH http://localhost:8080/slots/SLT-002/status
+Content-Type: application/json
+
+{ "status": "CANCELLED" }

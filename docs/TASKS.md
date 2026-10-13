@@ -2,7 +2,7 @@
 Legend: TODO · DOING · DONE · BLOCKED · CUT
 
 ## Current state (rewrite fully on every update)
-Sprint: S5 complete (5.1-5.3; 5.4 SSE cut) | Running: yes | Broken: nothing known; real model call failed with GATEWAY_ERROR when the key was not set in this shell (shows as RULES fallback in the UI, as designed) | Uncommitted: ui/ | Last commit: 86c0735 feat(s4) | Next 3: 6.1 README, 6.2 ADR final, 6.3 secrets scan | Open questions: PARSE_ERROR rate | Time: 14:09 = minute 108 of 150, 22 min ahead of the S5 end (130 to 150 window)
+Sprint: S6 mostly complete: README, ADR final, secrets scan, clean-clone tests and UI build, DEMO.md done | Running: yes | Broken: nothing known | Not verified: Postgres profile (Docker unavailable), a live AI call from a clean shell, browser click-through | Uncommitted: S6 docs, Queue.jsx rejected-state button | Last commit: 894db12 feat(s5) | Next: user commits, dry-runs the demo with LLM_API_KEY, records video, makes repo public, pushes | Time: 14:36 = minute 135 of 150, before FREEZE (14:51)
 
 ## Sprints
 | ID | Sprint | Window (min) | Est. task minutes | Exit criteria | Status |
@@ -95,14 +95,14 @@ Rows: goal (req/rubric) | files | test | done when | evidence | commit. Files pe
       files: api/StreamController.java, test/api/StreamApiTest.java | test: IT receives status then result events | done when: green | evidence: CUT (optional, per cut order) | commit:
 
 ### S6 Prove and ship  (150-180, freeze at 150)
-- [ ] 6.1 README: run, env vars, docker, tests, endpoint list, demo notes, known limits  (deliverable)
-      files: README.md | test: commands in README executed once | done when: accurate | evidence: | commit:
-- [ ] 6.2 ADR final pass and secrets scan  (Gate 3)
-      files: docs/ADR.md | test: `git grep -nI` for key patterns clean; `.env` ignored | done when: ADR matches code; "Not built" verified | evidence: | commit:
-- [ ] 6.3 Clean-shell run from a fresh clone: `mvnw test`, Postgres profile, `npm ci && npm run build`  (Gate 3)
-      files: none | test: all green | done when: demo path works on Postgres | evidence: | commit:
-- [ ] 6.4 Demo script and 5-minute walkthrough notes; user records the video and makes the repo public  (submission)
-      files: docs/DEMO.md | test: dry run of the script | done when: user says done | evidence: | commit:
+- [x] 6.1 README: run, env vars, docker, tests, endpoint list, demo notes, known limits  (deliverable)
+      files: README.md | test: commands in README executed once | done when: accurate | evidence: README rewritten for SlotMind (run, env, Postgres, tests, endpoints, config, limits); commands matched the clean-clone run | commit:
+- [x] 6.2 ADR final pass and secrets scan  (Gate 3)
+      files: docs/ADR.md | test: `git grep -nI` for key patterns clean; `.env` ignored | done when: ADR matches code; "Not built" verified | evidence: secrets scan (git grep of key patterns over files and full history) clean, no .env tracked; ADR-007 reworded to match the planner, Not built gained SSE, UI ceiling, create endpoints; root ADR.md maps the five brief questions | commit:
+- [~] 6.3 Clean-shell run from a fresh clone: `mvnw test`, Postgres profile, `npm ci && npm run build`  (Gate 3)
+      files: none | test: all green | done when: demo path works on Postgres | evidence: PARTIAL. Fresh clone: mvnw test exit 0 (146 tests); npm ci, lint, build ok. Postgres profile NOT run: Docker Desktop could not start | commit:
+- [x] 6.4 Demo script and 5-minute walkthrough notes; user records the video and makes the repo public  (submission)
+      files: docs/DEMO.md | test: dry run of the script | done when: user says done | evidence: docs/DEMO.md written (5-minute script + curl fallback), requests.http extended; dry run with a real key and the video are yours | commit:
 
 ## Cut order (when behind by more than 15 minutes at a boundary)
 1) UI polish 2) SSE to polling (already polling; drop 5.4) 3) extras beyond the brief (`?strategy=`, `GET /appointments/{id}`) 4) optional deployment 5) tests beyond failure paths. NEVER cut: validation, fallback, conflict handling, integration tests of the main flow, README, ADR, secrets scan.
